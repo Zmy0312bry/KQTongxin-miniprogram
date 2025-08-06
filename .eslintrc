@@ -1,0 +1,11 @@
+// ESLint 检查 .vue 文件需要单独配置编辑器：
+// https://eslint.vuejs.org/user-guide/#editor-integrations
+{
+  "extends": ["taro/vue3"],
+  "rules": {
+    "space-before-function-paren": "off",
+     //在rules中添加自定义规则
+     //关闭组件命名规则
+    "vue/multi-word-component-names": "off"
+  }
+}
