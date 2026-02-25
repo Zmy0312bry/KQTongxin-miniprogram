@@ -19,7 +19,9 @@
         >
           <template #desc>
             <view class="form-info">
-              <text class="form-type">{{ item.type === 'complaint' ? '投诉' : '建议' }}</text>
+              <text class="form-type">{{
+                item.type === "complaint" ? "投诉" : "建议"
+              }}</text>
               <text class="form-time">{{ formatTime(item.upload_time) }}</text>
             </view>
           </template>
@@ -42,137 +44,136 @@
 
     <!-- 空状态 -->
     <view v-if="!isLoading && formList.length === 0" class="empty-state">
-
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import Taro from '@tarojs/taro'
+import { ref, onMounted, watch } from "vue";
+import Taro from "@tarojs/taro";
 
-const activeTab = ref('0')
-const formList = ref([])
-const currentPage = ref(1)
-const totalPages = ref(1)
-const isLoading = ref(false)
-const PAGE_SIZE = 4
+const activeTab = ref("0");
+const formList = ref([]);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const isLoading = ref(false);
+const PAGE_SIZE = 4;
 
-const token = Taro.getStorageSync('token')
+const token = Taro.getStorageSync("token");
 
 // 格式化时间戳
 const formatTime = (timestamp) => {
-  const date = new Date(timestamp * 1000)
-  const year = date.getFullYear()
-  const month = (date.getMonth() + 1).toString().padStart(2, '0')
-  const day = date.getDate().toString().padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+  const date = new Date(timestamp * 1000);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 // 获取表单列表
 const fetchFormList = async (page = 1, replace = true) => {
-  isLoading.value = true
-  if (replace) formList.value = []
+  isLoading.value = true;
+  if (replace) formList.value = [];
 
   try {
     const res = await Taro.request({
-      url: 'https://api.kuangqiaodongjie.cn/api/proceed/user_form',
-      method: 'GET',
+      url: "https://api.kuangqiaodongjie.cn/api/proceed/user_form",
+      method: "GET",
       data: {
         page_size: PAGE_SIZE,
         page: page,
-        finish: activeTab.value
+        finish: activeTab.value,
       },
       header: {
-        Authorization: Taro.getStorageSync('token') || '',
-        'Content-Type': 'application/json'
-      }
-    })
+        Authorization: Taro.getStorageSync("token") || "",
+        "Content-Type": "application/json",
+      },
+    });
 
-    console.log('接口响应:', res)
+    console.log("接口响应:", res);
 
     // ✅ token 过期处理
     if (res.statusCode === 401 || res.data?.code === 401) {
-      Taro.removeStorageSync('token')
-      Taro.removeStorageSync('nickName')
-      Taro.removeStorageSync('avatarUrl')
-      Taro.removeStorageSync('userId')
+      Taro.removeStorageSync("token");
+      Taro.removeStorageSync("nickName");
+      Taro.removeStorageSync("avatarUrl");
+      Taro.removeStorageSync("userId");
 
-      Taro.showToast({ title: '登录过期，请重新登录', icon: 'none' })
+      Taro.showToast({ title: "登录过期，请重新登录", icon: "none" });
       setTimeout(() => {
-        Taro.reLaunch({ url: '/pages/manapanel/index' })
-      }, 1500)
-      return
+        // 跳转到主页并切换到"我的"tab
+        Taro.reLaunch({ url: "/pages/index/index?tab=2" });
+      }, 1500);
+      return;
     }
 
     if (res.statusCode === 200 && res.data.code === 200) {
-      const { total_pages, results } = res.data.data || {}
-      totalPages.value = total_pages || 1
+      const { total_pages, results } = res.data.data || {};
+      totalPages.value = total_pages || 1;
 
       if (Array.isArray(results)) {
         if (replace) {
-          formList.value = results
+          formList.value = results;
           if (results.length === 0) {
-            Taro.showToast({ title: '暂无数据', icon: 'none' })
+            Taro.showToast({ title: "暂无数据", icon: "none" });
           }
         } else {
-          formList.value = [...formList.value, ...results]
+          formList.value = [...formList.value, ...results];
         }
       } else {
-        if (replace) formList.value = []
-        Taro.showToast({ title: '数据格式错误', icon: 'none' })
+        if (replace) formList.value = [];
+        Taro.showToast({ title: "数据格式错误", icon: "none" });
       }
     } else {
-      if (replace) formList.value = []
-      const msg = res.data?.message
-      if (msg?.includes('不存在') || msg?.includes('未找到')) {
-        Taro.showToast({ title: '暂无数据', icon: 'none' })
+      if (replace) formList.value = [];
+      const msg = res.data?.message;
+      if (msg?.includes("不存在") || msg?.includes("未找到")) {
+        Taro.showToast({ title: "暂无数据", icon: "none" });
       } else {
-        Taro.showToast({ title: msg || '加载失败', icon: 'none' })
+        Taro.showToast({ title: msg || "加载失败", icon: "none" });
       }
     }
-
   } catch (error) {
-    if (replace) formList.value = []
-    console.error('请求失败:', error)
-    Taro.showToast({ title: '请求错误', icon: 'none' })
+    if (replace) formList.value = [];
+    console.error("请求失败:", error);
+    Taro.showToast({ title: "请求错误", icon: "none" });
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
 // 加载更多
 const loadMore = () => {
   if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    fetchFormList(currentPage.value, false)
+    currentPage.value++;
+    fetchFormList(currentPage.value, false);
   }
-}
+};
 
 // 表单项点击事件
 const handleItemClick = (item) => {
-  if (activeTab.value === '0') {
+  if (activeTab.value === "0") {
     Taro.showToast({
-      title: '请等待工作人员处理',
-      icon: 'none'
-    })
+      title: "请等待工作人员处理",
+      icon: "none",
+    });
   } else {
     Taro.navigateTo({
-      url: `/pages/details/index?id=${item.uuidx}`
-    })
+      url: `/pages/details/index?id=${item.uuidx}`,
+    });
   }
-}
+};
 
 // 标签页切换监听
 watch(activeTab, () => {
-  currentPage.value = 1
-  fetchFormList(1, true)
-})
+  currentPage.value = 1;
+  fetchFormList(1, true);
+});
 
 // 初始加载
 onMounted(() => {
-  fetchFormList()
-})
+  fetchFormList();
+});
 </script>
 
 <style scoped>

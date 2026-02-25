@@ -2,9 +2,18 @@
   <view class="details-container">
     <view class="details-content" v-if="!loadError && formData">
       <nut-cell-group>
-        <nut-cell title="处理人" :desc="formData.admin_name || '暂无'"></nut-cell>
-        <nut-cell title="联系方式" :desc="formData.admin_phone || '暂无'"></nut-cell>
-        <nut-cell title="处理方式" :desc="formData.admin_way || '暂无'"></nut-cell>
+        <nut-cell
+          title="处理人"
+          :desc="formData.admin_name || '暂无'"
+        ></nut-cell>
+        <nut-cell
+          title="联系方式"
+          :desc="formData.admin_phone || '暂无'"
+        ></nut-cell>
+        <nut-cell
+          title="处理方式"
+          :desc="formData.admin_way || '暂无'"
+        ></nut-cell>
       </nut-cell-group>
 
       <!-- 处理内容卡片 -->
@@ -15,7 +24,9 @@
 
       <!-- 图片九宫格 -->
       <view v-if="formData.handle_images?.length">
-        <nut-divider content-position="left" class="custom-divider">图片展示</nut-divider>
+        <nut-divider content-position="left" class="custom-divider"
+          >图片展示</nut-divider
+        >
         <view class="image-grid">
           <view
             class="image-item"
@@ -48,7 +59,7 @@
         <nut-button
           type="primary"
           block
-          style="margin-top: 20rpx;"
+          style="margin-top: 20rpx"
           @click="submitRating"
         >
           提交评分
@@ -83,8 +94,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import Taro from '@tarojs/taro';
+import { ref, onMounted } from "vue";
+import Taro from "@tarojs/taro";
 
 const formData = ref(null);
 const previewImages = ref([]);
@@ -93,8 +104,8 @@ const loadError = ref(false);
 const rating = ref(0);
 
 const getImageUrl = (path) => {
-  if (!path) return '';
-  return path.startsWith('http')
+  if (!path) return "";
+  return path.startsWith("http")
     ? path
     : `https://api.kuangqiaodongjie.cn${path}`;
 };
@@ -105,35 +116,35 @@ const onRatingChange = (val) => {
 
 const submitRating = async () => {
   if (rating.value < 1 || rating.value > 5) {
-    Taro.showToast({ title: '请先选择评分', icon: 'none' });
+    Taro.showToast({ title: "请先选择评分", icon: "none" });
     return;
   }
 
   try {
     const uuid = formData.value?.uuidx;
-    const token = Taro.getStorageSync('token') || '';
+    const token = Taro.getStorageSync("token") || "";
 
     const res = await Taro.request({
       url: `https://api.kuangqiaodongjie.cn/api/proceed/user_form?uuid=${uuid}`,
-      method: 'PATCH',
+      method: "PATCH",
       header: {
         Authorization: token,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       data: { evaluation_info: rating.value },
     });
 
     if (res.statusCode === 200 && res.data.code === 200) {
-      Taro.showToast({ title: '评分成功', icon: 'success' });
+      Taro.showToast({ title: "评分成功", icon: "success" });
       // 直接更新本地数据，防止重复提交
       formData.value.evaluation_or_not = true;
       formData.value.evaluation_info = rating.value;
     } else {
-      throw new Error(res.data.message || '提交失败');
+      throw new Error(res.data.message || "提交失败");
     }
   } catch (err) {
-    console.error('评分失败:', err);
-    Taro.showToast({ title: err.message || '评分失败', icon: 'none' });
+    console.error("评分失败:", err);
+    Taro.showToast({ title: err.message || "评分失败", icon: "none" });
   }
 };
 
@@ -142,12 +153,12 @@ const fetchFormDetail = async (uuid) => {
   loadError.value = false;
   try {
     const res = await Taro.request({
-      url: 'https://api.kuangqiaodongjie.cn/api/proceed/user_form',
-      method: 'GET',
+      url: "https://api.kuangqiaodongjie.cn/api/proceed/user_form",
+      method: "GET",
       data: { uuid },
       header: {
-        Authorization: Taro.getStorageSync('token'),
-        'Content-Type': 'application/json',
+        Authorization: Taro.getStorageSync("token"),
+        "Content-Type": "application/json",
       },
     });
 
@@ -159,7 +170,7 @@ const fetchFormDetail = async (uuid) => {
         formData.value.handle = Number(formData.value.handle); // 确保是数字
         if (formData.value?.handle_images?.length) {
           previewImages.value = formData.value.handle_images.map((img) =>
-            getImageUrl(img.image)
+            getImageUrl(img.image),
           );
         }
         // 如果后端返回了评分，就同步到 rating
@@ -167,28 +178,31 @@ const fetchFormDetail = async (uuid) => {
           rating.value = formData.value.evaluation_info;
         }
       } else if (code === 400) {
-        Taro.showToast({ title: '暂无数据', icon: 'none' });
+        Taro.showToast({ title: "暂无数据", icon: "none" });
         loadError.value = true;
       } else if (code === 401) {
-        Taro.showToast({ title: '登录过期，请重新登录', icon: 'none' });
+        Taro.showToast({ title: "登录过期，请重新登录", icon: "none" });
+        // 清除本地存储的 token
+        Taro.removeStorageSync("token");
         setTimeout(() => {
-          Taro.navigateTo({ url: '/pages/manapanel/index' });
+          // 跳转到主页并切换到"我的"tab
+          Taro.reLaunch({ url: "/pages/index/index?tab=2" });
         }, 1500);
         return;
       } else {
         Taro.showToast({
-          title: res.data.message || '加载失败',
-          icon: 'none',
+          title: res.data.message || "加载失败",
+          icon: "none",
         });
         loadError.value = true;
       }
     } else {
-      Taro.showToast({ title: '请求错误', icon: 'none' });
+      Taro.showToast({ title: "请求错误", icon: "none" });
       loadError.value = true;
     }
   } catch (error) {
-    console.error('请求失败:', error);
-    Taro.showToast({ title: '请求失败', icon: 'none' });
+    console.error("请求失败:", error);
+    Taro.showToast({ title: "请求失败", icon: "none" });
     loadError.value = true;
   } finally {
     loading.value = false;
@@ -197,7 +211,7 @@ const fetchFormDetail = async (uuid) => {
 
 const previewImage = (index) => {
   if (!previewImages.value || !previewImages.value.length) {
-    Taro.showToast({ title: '暂无图片', icon: 'none' });
+    Taro.showToast({ title: "暂无图片", icon: "none" });
     return;
   }
   Taro.previewImage({
@@ -213,7 +227,6 @@ onMounted(() => {
   }
 });
 </script>
-
 
 <style>
 .details-container {
