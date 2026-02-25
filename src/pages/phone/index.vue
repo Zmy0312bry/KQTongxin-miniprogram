@@ -17,61 +17,61 @@
   </view>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
-import Taro from '@tarojs/taro'
+import { ref, onMounted } from "vue";
+import Taro from "@tarojs/taro";
+import { API_BASE_URL } from "../../config/api";
 
-const phoneList = ref([])
+const phoneList = ref([]);
 
 const fetchPhoneList = async () => {
-  const token = Taro.getStorageSync('token')
+  const token = Taro.getStorageSync("token");
 
   try {
     const res = await Taro.request({
-      url: 'https://api.kuangqiaodongjie.cn/api/community/phone_number',
-      method: 'GET',
+      url: `${API_BASE_URL}/community/phone_number`,
+      method: "GET",
       header: {
-        'Content-Type': 'application/json',
-        Authorization: token
-      }
-    })
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
 
     // ✅ 检查 token 是否过期
     if (res.statusCode === 401 || res.data?.code === 401) {
-      Taro.removeStorageSync('token')
-      Taro.removeStorageSync('nickName')
-      Taro.removeStorageSync('avatarUrl')
-      Taro.removeStorageSync('userId')
+      Taro.removeStorageSync("token");
+      Taro.removeStorageSync("nickName");
+      Taro.removeStorageSync("avatarUrl");
+      Taro.removeStorageSync("userId");
 
-      Taro.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+      Taro.showToast({ title: "登录已过期，请重新登录", icon: "none" });
       setTimeout(() => {
-        Taro.reLaunch({ url: '/pages/mypanel/index' }) // 替换为你的登录页路径
-      }, 1500)
-      return
+        Taro.reLaunch({ url: "/pages/mypanel/index" }); // 替换为你的登录页路径
+      }, 1500);
+      return;
     }
 
     if (res.statusCode === 200 && res.data.code === 200) {
-      phoneList.value = res.data.data
+      phoneList.value = res.data.data;
     } else {
-      Taro.showToast({ title: '加载失败', icon: 'none' })
+      Taro.showToast({ title: "加载失败", icon: "none" });
     }
   } catch (error) {
-    console.error('请求失败:', error)
-    Taro.showToast({ title: '请求错误', icon: 'none' })
+    console.error("请求失败:", error);
+    Taro.showToast({ title: "请求错误", icon: "none" });
   }
-}
+};
 
 const makePhoneCall = (number) => {
-  if (!number) return
+  if (!number) return;
   Taro.makePhoneCall({
-    phoneNumber: number
-  })
-}
+    phoneNumber: number,
+  });
+};
 
 onMounted(() => {
-  fetchPhoneList()
-})
+  fetchPhoneList();
+});
 </script>
-
 
 <style scoped>
 .container {

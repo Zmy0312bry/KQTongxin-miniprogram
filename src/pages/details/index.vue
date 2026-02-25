@@ -96,6 +96,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import Taro from "@tarojs/taro";
+import { API_BASE_URL, IMAGE_BASE_URL } from "../../config/api";
 
 const formData = ref(null);
 const previewImages = ref([]);
@@ -105,9 +106,7 @@ const rating = ref(0);
 
 const getImageUrl = (path) => {
   if (!path) return "";
-  return path.startsWith("http")
-    ? path
-    : `https://api.kuangqiaodongjie.cn${path}`;
+  return path.startsWith("http") ? path : `${IMAGE_BASE_URL}${path}`;
 };
 
 const onRatingChange = (val) => {
@@ -125,7 +124,7 @@ const submitRating = async () => {
     const token = Taro.getStorageSync("token") || "";
 
     const res = await Taro.request({
-      url: `https://api.kuangqiaodongjie.cn/api/proceed/user_form?uuid=${uuid}`,
+      url: `${API_BASE_URL}/proceed/user_form?uuid=${uuid}`,
       method: "PATCH",
       header: {
         Authorization: token,
@@ -153,7 +152,7 @@ const fetchFormDetail = async (uuid) => {
   loadError.value = false;
   try {
     const res = await Taro.request({
-      url: "https://api.kuangqiaodongjie.cn/api/proceed/user_form",
+      url: `${API_BASE_URL}/proceed/user_form`,
       method: "GET",
       data: { uuid },
       header: {

@@ -51,6 +51,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import Taro from "@tarojs/taro";
+import { API_BASE_URL } from "../../config/api";
 
 const activeTab = ref("0");
 const formList = ref([]);
@@ -77,7 +78,7 @@ const fetchFormList = async (page = 1, replace = true) => {
 
   try {
     const res = await Taro.request({
-      url: "https://api.kuangqiaodongjie.cn/api/proceed/user_form",
+      url: `${API_BASE_URL}/proceed/user_form`,
       method: "GET",
       data: {
         page_size: PAGE_SIZE,

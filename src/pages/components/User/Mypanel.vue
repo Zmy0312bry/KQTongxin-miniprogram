@@ -138,8 +138,8 @@ import { useUserStore } from "../../../store/user";
 import Taro, { useDidShow } from "@tarojs/taro";
 import { h } from "vue";
 import { My } from "@nutui/icons-vue-taro";
+import { API_BASE_URL, IMAGE_BASE_URL } from "../../../config/api";
 
-const BASE_URL = "http://localhost:8051";
 const DEFAULT_AVATAR =
   "https://img12.360buyimg.com/imagetools/jfs/t1/196430/38/8105/14329/60c806a4Ed506298a/e6de9fb7b8490f38.png";
 
@@ -219,6 +219,17 @@ watchEffect(() => {
     });
   }
 
+  // 查看我的派单：level为1, 2, 4时出现
+  if (level === 1 || level === 2 || level === 4) {
+    list.push({
+      id: "my-dispatch",
+      title: "查看我的派单",
+      desc: "查看派单情况",
+      icon: h(My),
+      path: "/pages/mydispatch/index",
+    });
+  }
+
   // 权限申请：level不为1, 2时出现（即0, 3, 4）
   if (level !== 1 && level !== 2) {
     list.push({
@@ -258,7 +269,7 @@ async function handleUserTap() {
       if (res.code) {
         try {
           const loginRes = await Taro.request({
-            url: `${BASE_URL}/api/user/login`,
+            url: `${API_BASE_URL}/user/login`,
             method: "POST",
             header: { "Content-Type": "application/json" },
             data: { code: res.code },
@@ -317,7 +328,7 @@ async function submitUserInfo() {
       avatarPath.startsWith("wxfile://");
     if (isLocalFile) {
       const uploadRes = await Taro.uploadFile({
-        url: `${BASE_URL}/api/user/upload_image`,
+        url: `${API_BASE_URL}/user/upload_image`,
         filePath: avatarPath,
         name: "file",
         header: {
@@ -334,7 +345,7 @@ async function submitUserInfo() {
     }
 
     const res = await Taro.request({
-      url: `${BASE_URL}/api/user/UserInfo`,
+      url: `${API_BASE_URL}/user/UserInfo`,
       method: "PUT",
       header: {
         Authorization: userStore.token,
@@ -379,8 +390,53 @@ function handleFunctionClick(item) {
     return;
   }
 
+  if (item.id === "my-dispatch") {
+    handleMyDispatch();
+    return;
+  }
+
   if (item.path) {
     Taro.navigateTo({ url: item.path });
+  }
+}
+
+async function handleMyDispatch() {
+  try {
+    // 检查是否已经订阅过
+    const subscribedKey = `subscribed_dispatch_${userStore.userId}`;
+    const hasSubscribed = Taro.getStorageSync(subscribedKey);
+
+    if (!hasSubscribed) {
+      // 未订阅，调用订阅消息接口
+      const res = await Taro.requestSubscribeMessage({
+        tmplIds: ["FVrAJnJauxtOwiEpxOW47zKiSICGIFvaq8iXUaHtY-g"],
+      });
+
+      if (
+        res &&
+        res["FVrAJnJauxtOwiEpxOW47zKiSICGIFvaq8iXUaHtY-g"] === "accept"
+      ) {
+        // 用户同意订阅
+        Taro.setStorageSync(subscribedKey, true);
+      } else {
+        // 用户拒绝订阅，弹出订阅提醒界面
+        Taro.navigateTo({
+          url: "/pages/subscribe/index",
+        });
+        return;
+      }
+    }
+
+    // 进入我的派单界面
+    Taro.navigateTo({
+      url: "/pages/mydispatch/index",
+    });
+  } catch (err) {
+    console.error("[订阅消息失败]", err);
+    // 处理订阅失败的情况，弹出订阅提醒界面
+    Taro.navigateTo({
+      url: "/pages/subscribe/index",
+    });
   }
 }
 
@@ -429,7 +485,7 @@ function navigateToAbout() {
 }
 
 function navigateToCommunity() {
-  const url = "https://api.kuangqiaodongjie.cn/media/qr_code/qrcode.jpg";
+  const url = `${IMAGE_BASE_URL}/media/qr_code/qrcode.jpg`;
   Taro.previewImage({ current: url, urls: [url] });
 }
 
@@ -463,7 +519,7 @@ async function refreshUserInfo() {
     console.log("[refreshUserInfo] 开始刷新用户信息");
 
     const res = await Taro.request({
-      url: `${BASE_URL}/api/user/UserInfo`,
+      url: `${API_BASE_URL}/user/UserInfo`,
 
       method: "GET",
 

@@ -62,6 +62,7 @@
 <script>
 import { ref, computed, onMounted } from "vue";
 import Taro from "@tarojs/taro";
+import { API_BASE_URL } from "../../config/api";
 
 export default {
   name: "LoginPage",
@@ -150,7 +151,7 @@ export default {
             try {
               const encodedSalt = encodeURIComponent(effectiveSalt.value);
               const r = await Taro.request({
-                url: `https://api.kuangqiaodongjie.cn/api/user/web_login?salt=${encodedSalt}`,
+                url: `${API_BASE_URL}/user/web_login?salt=${encodedSalt}`,
                 method: "POST",
                 data: { code: res.code },
               });
