@@ -2,29 +2,25 @@
   <view class="mydispatch-container">
     <!-- 派单列表内容 -->
     <view class="dispatch-list">
-      <nut-list :list-data="dispatchList" @scroll-bottom="onScrollBottom">
-        <template #default="{ item }">
-          <nut-cell-group>
-            <nut-cell
-              :title="item.title"
-              class="dispatch-item"
-              is-link
-              @click="handleItemClick(item)"
-            >
-              <template #desc>
-                <view class="dispatch-info">
-                  <text class="dispatch-type">{{
-                    item.type || "派单详情"
-                  }}</text>
-                  <text class="dispatch-time">{{
-                    formatTime(item.upload_time)
-                  }}</text>
-                </view>
-              </template>
-            </nut-cell>
-          </nut-cell-group>
-        </template>
-      </nut-list>
+      <view v-for="(item, index) in dispatchList" :key="index">
+        <nut-cell-group>
+          <nut-cell
+            :title="item.title"
+            class="dispatch-item"
+            is-link
+            @click="handleItemClick(item)"
+          >
+            <template #desc>
+              <view class="dispatch-info">
+                <text class="dispatch-type">{{ item.type || "派单详情" }}</text>
+                <text class="dispatch-time">{{
+                  formatTime(item.upload_time)
+                }}</text>
+              </view>
+            </template>
+          </nut-cell>
+        </nut-cell-group>
+      </view>
     </view>
 
     <!-- 加载提示 -->
@@ -41,7 +37,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import Taro from "@tarojs/taro";
+import Taro, { useReachBottom } from "@tarojs/taro";
 import { API_BASE_URL } from "../../config/api";
 
 const dispatchList = ref([]);
@@ -131,6 +127,11 @@ const onScrollBottom = () => {
   currentPage.value++;
   fetchDispatchList(currentPage.value);
 };
+
+// 监听触底事件
+useReachBottom(() => {
+  onScrollBottom();
+});
 
 // 派单项点击事件
 const handleItemClick = (item) => {

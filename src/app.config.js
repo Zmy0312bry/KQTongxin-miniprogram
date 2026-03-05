@@ -15,7 +15,6 @@ export default defineAppConfig({
     "pages/managedetails/index",
     "pages/managedetailss/index",
     "pages/mydispatch/index",
-    "pages/subscribe/index",
   ],
   window: {
     backgroundTextStyle: "light",
