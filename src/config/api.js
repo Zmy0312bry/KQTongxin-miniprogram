@@ -10,14 +10,14 @@ const ENV = process.env.NODE_ENV || 'development';
 // 开发环境：本地测试地址 http://localhost:8051/api
 // 生产环境：线上地址 https://api.kuangqiaodongjie.cn/api
 const API_BASE_URL = ENV === 'development'
-  ? 'http://localhost:8051/api'
+  ? 'http://8.130.64.206:8081/api'
   : 'https://api.kuangqiaodongjie.cn/api';
 
 // 图片基础地址（用于图片/媒体资源，不带/api路径）
 // 开发环境：本地测试地址 http://localhost:8051
 // 生产环境：线上地址 https://api.kuangqiaodongjie.cn
 const IMAGE_BASE_URL = ENV === 'development'
-  ? 'http://localhost:8051'
+  ? 'http://8.130.64.206:8081'
   : 'https://api.kuangqiaodongjie.cn';
 
 export {

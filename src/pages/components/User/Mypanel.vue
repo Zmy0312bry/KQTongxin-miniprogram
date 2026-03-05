@@ -12,9 +12,11 @@
         style="display: flex; flex-direction: column; justify-content: center"
       >
         <view style="display: flex; align-items: center; gap: 8px">
-          <text style="font-weight: bold; font-size: 18px">{{
-            userData.name
-          }}</text>
+          <text
+            style="font-weight: bold; font-size: 18px"
+            @click="handleUserTap"
+            >{{ userData.name }}</text
+          >
           <view
             v-if="isLogin && permissionTag"
             :style="{
@@ -28,8 +30,10 @@
             {{ permissionTag.label }}
           </view>
         </view>
-        <text v-if="isLogin" style="color: #888">已登录</text>
-        <text v-else style="color: #ccc">点击登录</text>
+        <text v-if="isLogin" style="color: #888" @click="handleUserTap"
+          >已登录</text
+        >
+        <text v-else style="color: #ccc" @click="handleUserTap">点击登录</text>
       </nut-col>
     </nut-row>
 
@@ -139,6 +143,11 @@ import Taro, { useDidShow } from "@tarojs/taro";
 import { h } from "vue";
 import { My } from "@nutui/icons-vue-taro";
 import { API_BASE_URL, IMAGE_BASE_URL } from "../../../config/api";
+import {
+  checkAndSubscribe,
+  SubscribeStatus,
+  LONG_TERM_TEMPLATE_ID,
+} from "../../../utils/subscribeManager";
 
 const DEFAULT_AVATAR =
   "https://img12.360buyimg.com/imagetools/jfs/t1/196430/38/8105/14329/60c806a4Ed506298a/e6de9fb7b8490f38.png";
@@ -400,43 +409,25 @@ function handleFunctionClick(item) {
   }
 }
 
+/**
+ * 处理查看我的派单
+ * 直接调用微信官方 requestSubscribeMessage 订阅面板（长期订阅）
+ * - 首次：弹出官方订阅面板，用户选择接受/拒绝
+ * - 已勾选"总是保持以上选择"：微信不再弹窗，静默返回之前的选择
+ * - 无论用户是否订阅，都允许进入派单页面（订阅为可选功能）
+ */
 async function handleMyDispatch() {
   try {
-    // 检查是否已经订阅过
-    const subscribedKey = `subscribed_dispatch_${userStore.userId}`;
-    const hasSubscribed = Taro.getStorageSync(subscribedKey);
+    // 直接调用微信官方订阅消息面板（长期订阅）
+    // 若用户已勾选"总是保持以上选择"，微信不弹窗，静默返回结果
+    await checkAndSubscribe(LONG_TERM_TEMPLATE_ID);
 
-    if (!hasSubscribed) {
-      // 未订阅，调用订阅消息接口
-      const res = await Taro.requestSubscribeMessage({
-        tmplIds: ["FVrAJnJauxtOwiEpxOW47zKiSICGIFvaq8iXUaHtY-g"],
-      });
-
-      if (
-        res &&
-        res["FVrAJnJauxtOwiEpxOW47zKiSICGIFvaq8iXUaHtY-g"] === "accept"
-      ) {
-        // 用户同意订阅
-        Taro.setStorageSync(subscribedKey, true);
-      } else {
-        // 用户拒绝订阅，弹出订阅提醒界面
-        Taro.navigateTo({
-          url: "/pages/subscribe/index",
-        });
-        return;
-      }
-    }
-
-    // 进入我的派单界面
-    Taro.navigateTo({
-      url: "/pages/mydispatch/index",
-    });
+    // 无论订阅结果如何，都进入派单页面（订阅是可选功能）
+    Taro.navigateTo({ url: "/pages/mydispatch/index" });
   } catch (err) {
-    console.error("[订阅消息失败]", err);
-    // 处理订阅失败的情况，弹出订阅提醒界面
-    Taro.navigateTo({
-      url: "/pages/subscribe/index",
-    });
+    console.error("[MyDispatch] 处理失败:", err);
+    // 发生错误时仍然允许进入派单页面
+    Taro.navigateTo({ url: "/pages/mydispatch/index" });
   }
 }
 
