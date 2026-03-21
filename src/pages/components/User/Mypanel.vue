@@ -256,19 +256,13 @@ watchEffect(() => {
 async function handleUserTap() {
   // 如果已登录，检查是否需要弹出编辑窗口
   if (userStore.isLogin()) {
-    // 只有第一次登录（hasCompletedProfile 为空或 false）才弹出编辑窗口
-    if (!userStore.hasCompletedProfile) {
-      // 先刷新用户信息，获取最新数据
-      await refreshUserInfo();
-      // 预填表单
-      editForm.name = userStore.name;
-      editForm.avatar = userStore.avatar;
-      editForm.phone = userStore.phone; // ✅ 预填手机号
-      showInfoEditor.value = true;
-    } else {
-      // 已完善过个人信息，只刷新信息
-      refreshUserInfo();
-    }
+    // 先刷新用户信息，获取最新数据
+    await refreshUserInfo();
+    // 预填表单
+    editForm.name = userStore.name;
+    editForm.avatar = userStore.avatar;
+    editForm.phone = userStore.phone; // ✅ 预填手机号
+    showInfoEditor.value = true;
     return;
   }
 
@@ -472,12 +466,20 @@ async function submitApplyReason() {
 }
 
 function navigateToAbout() {
-  Taro.showModal({ content: "城子街道矿桥东街社区" });
+  Taro.showModal({ content: "城子街道矿桥东街社区 \r\n 3.0.2" });
 }
 
 function navigateToCommunity() {
   const url = `${IMAGE_BASE_URL}/media/qr_code/qrcode.jpg`;
-  Taro.previewImage({ current: url, urls: [url] });
+  console.log("[navigateToCommunity] 图片URL:", url);
+  Taro.previewImage({
+    current: url,
+    urls: [url],
+    fail: (err) => {
+      console.error("[navigateToCommunity] 预览图片失败:", err);
+      Taro.showToast({ title: "图片加载失败", icon: "none" });
+    },
+  });
 }
 
 function onImgError() {
